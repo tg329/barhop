@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barhopping Path Planner</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <svg id="map" height="1000" width="2000"></svg>
+    <script>
+        const svg = d3.select("#map");
+        const width = svg.attr("width");
+        const height = svg.attr("height");
+        const margin = { top: 20, right: 100, bottom: 20, left: 100 };
+        const mapWidth = width - margin.left - margin.right;
+        const mapHeight = height - margin.top - margin.bottom;
+
+        const requestData = async function () {
+            const boston = await d3.csv("yelp_boston.csv", d3.autoType);
+            const pittsburgh = await d3.csv("yelp_pittsburgh.csv", d3.autoType);
+            const neighborhoods = await d3.json("bpda_neighborhood_boundaries.json");
+
+            // console.log(boston);
+            // console.log(neighborhoods);
+            console.log(neighborhoods.features);
+
+
+        };
+        requestData();
+    </script>
+</body>
+
+</html>
