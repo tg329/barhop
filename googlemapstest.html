@@ -45,6 +45,17 @@
             background-color: #fff;
             border-radius: 5px;
         }
+
+        .tooltip {
+            pointer-events: none;
+            visibility: hidden;
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
     </style>
 </head>
 
@@ -66,8 +77,9 @@
             </div>
             <div id="bar-crawl-info"></div>
         </div>
-
     </div>
+
+    <div id="tooltip" class="tooltip"></div>
 
     <script>
         const svg = d3.select("#map");
@@ -126,12 +138,24 @@
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
                 .attr('inBarCrawl', false)
 
+            const tooltip = d3.select("#tooltip");
 
             circles.on("mouseover", function (event, d) {
                 d3.select(this)
                     .transition().duration(100)
                     .attr("stroke", "black")
                     .attr("stroke-width", 1);
+
+                tooltip.transition()
+                    .duration(100)
+                    .style("visibility", "visible")
+                    .style("opacity", 1);
+
+                tooltip.html(`<strong>${d.name}</strong>
+                <br>Rating: ${d.rating}
+                <br>Reviews: ${d.review_count}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 20) + "px");
             });
 
             circles.on("mouseout", function (event, d) {
@@ -142,6 +166,11 @@
                         .attr("stroke", "")
                         .attr("stroke-width", 1);
                 }
+
+                tooltip.transition()
+                    .duration(500)
+                    .style("visibility", "visible")
+                    .style("opacity", 0);
             });
 
             circles.on("click", function (event, d) {
