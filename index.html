@@ -1,40 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barhopping Path Planner</title>
+    <title>Boston Map Outline</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://d3js.org/topojson.v3.min.js"></script>
     <style>
-
+    
     </style>
 </head>
-
 <body>
-    <svg id="map" height="1000" width="2000"></svg>
+    <svg id="map" width="1000" height="800"></svg>
+
     <script>
-        const svg = d3.select("#map");
-        const width = svg.attr("width");
-        const height = svg.attr("height");
-        const margin = { top: 20, right: 100, bottom: 20, left: 100 };
-        const mapWidth = width - margin.left - margin.right;
-        const mapHeight = height - margin.top - margin.bottom;
+        const svg = d3.select("#map"),
+              width = svg.attr("width"),
+              height = svg.attr("height");
+
+        const map = svg.append("g");
 
         const requestData = async function () {
-            const boston = await d3.csv("yelp_boston.csv", d3.autoType);
-            const pittsburgh = await d3.csv("yelp_pittsburgh.csv", d3.autoType);
-            const neighborhoods = await d3.json("bpda_neighborhood_boundaries.json");
+            const geoData = await d3.json("bpda_neighborhood_boundaries.json"); // Directly use GeoJSON
 
-            // console.log(boston);
-            // console.log(neighborhoods);
-            console.log(neighborhoods.features);
+            console.log(geoData); 
 
 
+            const projection = d3.geoMercator()
+                .scale(200000) 
+                .center([-71.0589, 42.3601]) // centers on Boston
+                .translate([width / 2, height / 2]); 
+
+            const path = d3.geoPath().projection(projection);
+
+
+            map.selectAll("path")
+                .data(geoData.features) 
+                .join("path")
+                .attr("d", path)
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+                .attr("fill", "none");
         };
+
         requestData();
     </script>
 </body>
-
 </html>
