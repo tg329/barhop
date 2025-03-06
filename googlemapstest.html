@@ -146,14 +146,17 @@
                     .attr("stroke", "black")
                     .attr("stroke-width", 1);
 
+                const categories = JSON.parse(d.categories_json);
+                const firstCategory = categories.map(category => category[0]).join(", ");
+                const stars = "★".repeat(Math.floor(d.rating));
+
                 tooltip.transition()
                     .duration(100)
                     .style("visibility", "visible")
                     .style("opacity", 1);
 
                 tooltip.html(`<strong>${d.name}</strong>
-                <br>Rating: ${d.rating}
-                <br>Reviews: ${d.review_count}`)
+                <br>Rating: ${stars}`)
                     .style("left", (event.pageX + 5) + "px")
                     .style("top", (event.pageY - 20) + "px");
             });
@@ -169,7 +172,7 @@
 
                 tooltip.transition()
                     .duration(500)
-                    .style("visibility", "visible")
+                    .style("visibility", "hidden")
                     .style("opacity", 0);
             });
 
@@ -200,12 +203,16 @@
             const barCrawlInfo = d3.select("#bar-crawl-info");
             barCrawlInfo.html("");
             barCrawlList.forEach((d, i) => {
+                const categories = JSON.parse(d.categories_json);
+                const category = categories.map(category => category[0]).join(", ");
+                const stars = "★".repeat(Math.floor(d.rating));
+
                 barCrawlInfo.append("div")
                     .attr("class", "bar-crawl-item")
                     .html(`<strong>${i + 1}. ${d.name}</strong>
-                    <br>Rating: ${d.rating}
+                    <br>Rating: ${stars}
                     <br>Reviews: ${d.review_count}
-                    <br>Categories: ${d.categories_json}`);
+                    <br>Categories: ${category}`);
             });
         }
     </script>
