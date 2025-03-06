@@ -6,7 +6,7 @@
     <title>Boston Map Outline</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-    
+
     </style>
 </head>
 <body>
@@ -20,13 +20,12 @@
         const map = svg.append("g");
 
         const requestData = async function () {
-            const geoData = await d3.json("bpda_neighborhood_boundaries.json"); // Directly use GeoJSON
+            const geoData = await d3.json("bpda_neighborhood_boundaries.json"); 
 
             console.log(geoData); 
 
-
             const projection = d3.geoMercator()
-                .scale(200000) 
+                .scale(150000) 
                 .center([-71.0589, 42.3601]) // centers on Boston
                 .translate([width / 2, height / 2]); 
 
