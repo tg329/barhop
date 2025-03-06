@@ -53,7 +53,11 @@
                     <option value="2">2</option>
                 </select>
             </div>
+            <div id="crawl-selection">
+                <svg id="selection" width="100" height="100"></svg>
+            </div>
         </div>
+        
     </div>
 
     <script>
@@ -65,7 +69,6 @@
 
         const requestData = async function () {
             const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
-            const restaurants = await d3.csv("datasets/yelp_boston.csv");
 
             console.log(geoData);
 
@@ -85,14 +88,7 @@
                 .attr("stroke-width", 1)
                 .attr("fill", "none");
 
-            map.selectAll("circles")
-                .data(restaurants)
-                .join("circle")
-                .attr("cx", d => projection([d.longitude, d.latitude])[0])
-                .attr("cy", d => projection([d.longitude, d.latitude])[1])
-                .attr("r", 3)
-                .attr("fill", "red");
-
+            
             // 10/21 lecture
             const zoom = d3.zoom()
                 .scaleExtent([1, 6])
@@ -107,21 +103,57 @@
             // add points to map
             const yelpData = await d3.csv("datasets/yelp_boston.csv");
             // store yelp datapoints that are selected for the bar crawl. 
-            // TODO: make into a linked list??!???
+            // TODO: make into a linked list??!??? to faciliate changing order
             barCrawlList = []   
 
             console.log(yelpData);
-            map.selectAll('map.points').data(yelpData)
+
+            let circles = map.selectAll('map.points').data(yelpData)
                 .join('circle')
                 .attr('class', 'point')
+                .attr("fill", "red")
                 .attr('r', 2)
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
-                .on('click', d => updateBarCrawl(event, d))
+                .attr('inBarCrawl', false)
 
-            function updateBarCrawl(event, d){
-                console.log('click')
-            }
+        
+            circles.on("mouseover", function(event, d) {
+                d3.select(this)
+                    .transition().duration(100)
+                    .attr("stroke","black")
+                    .attr("stroke-width", 1);  
+            });
+            
+            circles.on("mouseout", function(event, d) {
+                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
+                if (!inBarCrawl){
+                    d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke","")
+                    .attr("stroke-width", 1);
+                }   
+            });
+
+            circles.on("click", function(event, d) {
+                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
+                if (inBarCrawl){
+                    d3.select(this)
+                    .attr('inBarCrawl', false)
+                    .attr('fill', 'red')
+                    barCrawlList.splice(barCrawlList.indexOf(d), 1)
+
+                } else {
+                    d3.select(this)
+                    .attr('inBarCrawl', true)
+                    .attr('fill', 'blue')
+                    barCrawlList.push(d)
+                }
+
+                console.log(barCrawlList)
+                
+            });
+
         };
 
         requestData();
