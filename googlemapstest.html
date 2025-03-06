@@ -148,7 +148,8 @@
 
                 const categories = JSON.parse(d.categories_json);
                 const firstCategory = categories.map(category => category[0]).join(", ");
-                const stars = "★".repeat(Math.floor(d.rating));
+                const half = d.rating%1 >= 0.5 ? "½" : "";
+                const stars = "★".repeat(Math.floor(d.rating)) + half;
 
                 tooltip.transition()
                     .duration(100)
@@ -205,7 +206,8 @@
             barCrawlList.forEach((d, i) => {
                 const categories = JSON.parse(d.categories_json);
                 const category = categories.map(category => category[0]).join(", ");
-                const stars = "★".repeat(Math.floor(d.rating));
+                const half = d.rating%1 >= 0.5 ? "½" : "";
+                const stars = "★".repeat(Math.floor(d.rating)) + half;
 
                 barCrawlInfo.append("div")
                     .attr("class", "bar-crawl-item")
@@ -213,7 +215,7 @@
                     <br>Rating: ${stars}
                     <br>Reviews: ${d.review_count}
                     <br>Categories: ${category}`);
-            });
+            }); 
         }
     </script>
 </body>
