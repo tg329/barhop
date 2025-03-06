@@ -37,6 +37,18 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
+        button {
+            background-color: #8391a0;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s ease;
+        }
+
     </style>
 </head>
 
@@ -53,9 +65,12 @@
                     <option value="2">2</option>
                 </select>
             </div>
-            <div id="crawl-selection">
-                <svg id="selection" width="100" height="100"></svg>
-            </div>
+            <h2>
+                Bar Crawl
+            </h2>
+            <svg id="selection" width="300" height="300"></svg>
+            <div id="nav-button"></div>
+            
         </div>
         
     </div>
@@ -66,6 +81,8 @@
         const height = svg.attr("height");
 
         const map = svg.append("g");
+
+        const barCrawl = d3.select("#selection")
 
         const requestData = async function () {
             const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
@@ -144,15 +161,42 @@
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
                 } else {
+                    barCrawl.append('text')
+                        .attr('dy', 10 + barCrawlList.length * 15)
+                        .text(d.name)
+
                     d3.select(this)
-                    .attr('inBarCrawl', true)
-                    .attr('fill', 'blue')
+                        .attr('inBarCrawl', true)
+                        .attr('fill', 'blue')
+
                     barCrawlList.push(d)
                 }
 
                 console.log(barCrawlList)
                 
             });
+
+
+
+            // Buttons
+
+            const navButton = d3.select("#nav-button");
+            navButton.append('button')
+                    .text('naviagate!')
+                    .on('click', function (event, d){
+
+                        // create a hyperlink in this form:
+                        // https://www.google.de/maps/dir/origin_lat,origin_lng/destination_lat,destination_lng/
+                        console.log(barCrawlList)
+
+                        hyperlink = "https://www.google.de/maps/dir/"
+                        barCrawlList.forEach(d => {
+                            hyperlink = hyperlink + d.latitude +","+ d.longitude + "/";
+                        });
+
+                        console.log(hyperlink)
+                    })
+
 
         };
 
