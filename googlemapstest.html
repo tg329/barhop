@@ -61,10 +61,11 @@
         const width = svg.attr("width");
         const height = svg.attr("height");
 
-        const map = svg.append("g"); 
+        const map = svg.append("g");
 
         const requestData = async function () {
             const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
+            const restaurants = await d3.csv("datasets/yelp_boston.csv");
 
             console.log(geoData);
 
@@ -84,10 +85,18 @@
                 .attr("stroke-width", 1)
                 .attr("fill", "none");
 
+            map.selectAll("circles")
+                .data(restaurants)
+                .join("circle")
+                .attr("cx", d => projection([d.longitude, d.latitude])[0])
+                .attr("cy", d => projection([d.longitude, d.latitude])[1])
+                .attr("r", 3)
+                .attr("fill", "red");
+
             // 10/21 lecture
             const zoom = d3.zoom()
-                .scaleExtent([1, 6]) 
-                .translateExtent([[-width / 6, -height / 6], [width * 1.2, height * 1.2]]) 
+                .scaleExtent([1, 6])
+                .translateExtent([[-width / 6, -height / 6], [width * 1.2, height * 1.2]])
                 .on("zoom", (event) => {
                     map.attr("transform", event.transform);
                     
