@@ -38,17 +38,13 @@
             border-radius: 4px;
         }
 
-        button {
-            background-color: #8391a0;
-            color: white;
+        .bar-crawl-item {
+            margin-bottom: 10px;
             padding: 10px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 5px;
-            transition: background 0.3s ease;
+            border: 1px solid #000000;
+            background-color: #fff;
+            border-radius: 5px;
         }
-
     </style>
 </head>
 
@@ -65,14 +61,12 @@
                     <option value="2">2</option>
                 </select>
             </div>
-            <h2>
-                Bar Crawl
-            </h2>
-            <svg id="selection" width="300" height="300"></svg>
-            <div id="nav-button"></div>
-            
+            <div id="crawl-selection">
+                <svg id="selection" width="100" height="100"></svg>
+            </div>
+            <div id="bar-crawl-info"></div>
         </div>
-        
+
     </div>
 
     <script>
@@ -81,8 +75,6 @@
         const height = svg.attr("height");
 
         const map = svg.append("g");
-
-        const barCrawl = d3.select("#selection")
 
         const requestData = async function () {
             const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
@@ -105,14 +97,14 @@
                 .attr("stroke-width", 1)
                 .attr("fill", "none");
 
-            
+
             // 10/21 lecture
             const zoom = d3.zoom()
                 .scaleExtent([1, 6])
                 .translateExtent([[-width / 6, -height / 6], [width * 1.2, height * 1.2]])
                 .on("zoom", (event) => {
                     map.attr("transform", event.transform);
-                    
+
                 });
 
             svg.call(zoom);
@@ -121,7 +113,7 @@
             const yelpData = await d3.csv("datasets/yelp_boston.csv");
             // store yelp datapoints that are selected for the bar crawl. 
             // TODO: make into a linked list??!??? to faciliate changing order
-            barCrawlList = []   
+            barCrawlList = []
 
             console.log(yelpData);
 
@@ -134,73 +126,59 @@
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
                 .attr('inBarCrawl', false)
 
-        
-            circles.on("mouseover", function(event, d) {
+
+            circles.on("mouseover", function (event, d) {
                 d3.select(this)
                     .transition().duration(100)
-                    .attr("stroke","black")
-                    .attr("stroke-width", 1);  
-            });
-            
-            circles.on("mouseout", function(event, d) {
-                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
-                if (!inBarCrawl){
-                    d3.select(this)
-                    .transition().duration(200)
-                    .attr("stroke","")
+                    .attr("stroke", "black")
                     .attr("stroke-width", 1);
-                }   
             });
 
-            circles.on("click", function(event, d) {
+            circles.on("mouseout", function (event, d) {
                 inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
-                if (inBarCrawl){
+                if (!inBarCrawl) {
                     d3.select(this)
-                    .attr('inBarCrawl', false)
-                    .attr('fill', 'red')
+                        .transition().duration(200)
+                        .attr("stroke", "")
+                        .attr("stroke-width", 1);
+                }
+            });
+
+            circles.on("click", function (event, d) {
+                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
+                if (inBarCrawl) {
+                    d3.select(this)
+                        .attr('inBarCrawl', false)
+                        .attr('fill', 'red')
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
                 } else {
-                    barCrawl.append('text')
-                        .attr('dy', 10 + barCrawlList.length * 15)
-                        .text(d.name)
-
                     d3.select(this)
                         .attr('inBarCrawl', true)
                         .attr('fill', 'blue')
-
                     barCrawlList.push(d)
                 }
 
                 console.log(barCrawlList)
-                
+                updateBarCrawlInfo();
             });
-
-
-
-            // Buttons
-
-            const navButton = d3.select("#nav-button");
-            navButton.append('button')
-                    .text('naviagate!')
-                    .on('click', function (event, d){
-
-                        // create a hyperlink in this form:
-                        // https://www.google.de/maps/dir/origin_lat,origin_lng/destination_lat,destination_lng/
-                        console.log(barCrawlList)
-
-                        hyperlink = "https://www.google.de/maps/dir/"
-                        barCrawlList.forEach(d => {
-                            hyperlink = hyperlink + d.latitude +","+ d.longitude + "/";
-                        });
-
-                        console.log(hyperlink)
-                    })
-
 
         };
 
         requestData();
+
+        function updateBarCrawlInfo() {
+            const barCrawlInfo = d3.select("#bar-crawl-info");
+            barCrawlInfo.html("");
+            barCrawlList.forEach((d, i) => {
+                barCrawlInfo.append("div")
+                    .attr("class", "bar-crawl-item")
+                    .html(`<strong>${i + 1}. ${d.name}</strong>
+                    <br>Rating: ${d.rating}
+                    <br>Reviews: ${d.review_count}
+                    <br>Categories: ${d.categories_json}`);
+            });
+        }
     </script>
 </body>
 

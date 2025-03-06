@@ -37,6 +37,18 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
+        button {
+            background-color: #8391a0;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s ease;
+        }
+
     </style>
 </head>
 
@@ -53,7 +65,14 @@
                     <option value="2">2</option>
                 </select>
             </div>
+            <h2>
+                Bar Crawl
+            </h2>
+            <svg id="selection" width="300" height="300"></svg>
+            <div id="nav-button"></div>
+            
         </div>
+        
     </div>
 
     <script>
@@ -63,12 +82,14 @@
 
         const map = svg.append("g");
 
+        const barCrawl = d3.select("#selection")
+
         const requestData = async function () {
             const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
-            const restaurants = await d3.csv("datasets/yelp_boston.csv");
 
             console.log(geoData);
 
+            // draw map 
             const projection = d3.geoMercator()
                 .scale(160000)
                 .center([-71.0589, 42.3601]) // center on Boston
@@ -84,23 +105,99 @@
                 .attr("stroke-width", 1)
                 .attr("fill", "none");
 
-            map.selectAll("circles")
-                .data(restaurants)
-                .join("circle")
-                .attr("cx", d => projection([d.longitude, d.latitude])[0])
-                .attr("cy", d => projection([d.longitude, d.latitude])[1])
-                .attr("r", 3)
-                .attr("fill", "red");
-
+            
             // 10/21 lecture
             const zoom = d3.zoom()
                 .scaleExtent([1, 6])
                 .translateExtent([[-width / 6, -height / 6], [width * 1.2, height * 1.2]])
                 .on("zoom", (event) => {
                     map.attr("transform", event.transform);
+                    
                 });
 
             svg.call(zoom);
+
+            // add points to map
+            const yelpData = await d3.csv("datasets/yelp_boston.csv");
+            // store yelp datapoints that are selected for the bar crawl. 
+            // TODO: make into a linked list??!??? to faciliate changing order
+            barCrawlList = []   
+
+            console.log(yelpData);
+
+            let circles = map.selectAll('map.points').data(yelpData)
+                .join('circle')
+                .attr('class', 'point')
+                .attr("fill", "red")
+                .attr('r', 2)
+                .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
+                .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
+                .attr('inBarCrawl', false)
+
+        
+            circles.on("mouseover", function(event, d) {
+                d3.select(this)
+                    .transition().duration(100)
+                    .attr("stroke","black")
+                    .attr("stroke-width", 1);  
+            });
+            
+            circles.on("mouseout", function(event, d) {
+                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
+                if (!inBarCrawl){
+                    d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke","")
+                    .attr("stroke-width", 1);
+                }   
+            });
+
+            circles.on("click", function(event, d) {
+                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
+                if (inBarCrawl){
+                    d3.select(this)
+                    .attr('inBarCrawl', false)
+                    .attr('fill', 'red')
+                    barCrawlList.splice(barCrawlList.indexOf(d), 1)
+
+                } else {
+                    barCrawl.append('text')
+                        .attr('dy', 10 + barCrawlList.length * 15)
+                        .text(d.name)
+
+                    d3.select(this)
+                        .attr('inBarCrawl', true)
+                        .attr('fill', 'blue')
+
+                    barCrawlList.push(d)
+                }
+
+                console.log(barCrawlList)
+                
+            });
+
+
+
+            // Buttons
+
+            const navButton = d3.select("#nav-button");
+            navButton.append('button')
+                    .text('naviagate!')
+                    .on('click', function (event, d){
+
+                        // create a hyperlink in this form:
+                        // https://www.google.de/maps/dir/origin_lat,origin_lng/destination_lat,destination_lng/
+                        console.log(barCrawlList)
+
+                        hyperlink = "https://www.google.de/maps/dir/"
+                        barCrawlList.forEach(d => {
+                            hyperlink = hyperlink + d.latitude +","+ d.longitude + "/";
+                        });
+
+                        console.log(hyperlink)
+                    })
+
+
         };
 
         requestData();
