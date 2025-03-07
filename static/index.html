@@ -239,6 +239,7 @@
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
                 .attr('inBarCrawl', false)
+                .attr('name', d => d.name)
 
             circles.on("mouseover", function(event, d) {
                 d3.select(this)
@@ -362,18 +363,21 @@
                     <br><button class="delete">Delete</button>`);
 
                     item.select(".delete").on("click", function () {
+
                         barCrawlList.splice(barCrawlList.indexOf(d), 1);
 
-                        circles.filter(circleData => circleData.id === d.id)
+                        circles.filter(circleData => circleData.name === d.name)
                             .attr('fill', 'red')
                             .attr('stroke', '0')
                             .attr('inBarCrawl', false);
 
+                        console.log(barCrawlList)
+
                         updateBarCrawlInfo();
+
                     });
 
                     waypoints.push(L.latLng(d.latitude, d.longitude))
-
 
                 });
 
