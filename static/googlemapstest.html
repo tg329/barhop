@@ -144,6 +144,10 @@
             });
     
             circles.on("mouseout", function () {
+                d3.select(this)
+                    .transition().duration(100)
+                    .attr("stroke-width", 0);
+
                 tooltip.transition()
                     .duration(500)
                     .style("visibility", "hidden")
