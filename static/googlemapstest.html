@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boston Map Outline</title>
+    <title>Barhopping Boston</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
@@ -36,6 +36,7 @@
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            max-width: 345px;
         }
 
         .bar-crawl-item {
@@ -66,11 +67,7 @@
         </div>
         <div id="filter-container">
             <div class="filter-box">
-                <label for="filter2">Filter</label>
-                <select id="filter2" name="filter2">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                </select>
+                <input type="text" id="search" name="search" placeholder="Search for restaurants or foods">
             </div>
             <div id="crawl-selection">
                 <svg id="selection" width="100" height="100"></svg>
@@ -85,15 +82,11 @@
         const svg = d3.select("#map");
         const width = svg.attr("width");
         const height = svg.attr("height");
-
         const map = svg.append("g");
 
         const requestData = async function () {
             const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
 
-            console.log(geoData);
-
-            // draw map 
             const projection = d3.geoMercator()
                 .scale(160000)
                 .center([-71.0589, 42.3601]) // center on Boston
@@ -106,11 +99,10 @@
                 .join("path")
                 .attr("d", path)
                 .attr("stroke", "black")
-                .attr("stroke-width", 1)
+                .attr("stroke-width", 0.5)
                 .attr("fill", "none");
 
-
-            // 10/21 lecture
+            //10/21 
             const zoom = d3.zoom()
                 .scaleExtent([1, 6])
                 .translateExtent([[-width / 6, -height / 6], [width * 1.2, height * 1.2]])
@@ -118,13 +110,10 @@
                     map.attr("transform", event.transform);
 
                 });
+                svg.call(zoom);
 
-            svg.call(zoom);
 
-            // add points to map
             const yelpData = await d3.csv("datasets/yelp_boston.csv");
-            // store yelp datapoints that are selected for the bar crawl. 
-            // TODO: make into a linked list??!??? to faciliate changing order
             barCrawlList = []
 
             console.log(yelpData);
@@ -146,19 +135,16 @@
                     .attr("stroke", "black")
                     .attr("stroke-width", 1);
 
-                const categories = JSON.parse(d.categories_json);
-                const firstCategory = categories.map(category => category[0]).join(", ");
-                const half = d.rating%1 >= 0.5 ? "½" : "";
+                const half = d.rating % 1 >= 0.5 ? "½" : "";
                 const stars = "★".repeat(Math.floor(d.rating)) + half;
 
                 tooltip.transition()
                     .duration(100)
                     .style("visibility", "visible")
                     .style("opacity", 1);
-
                 tooltip.html(`<strong>${d.name}</strong>
                 <br>Rating: ${stars}`)
-                    .style("left", (event.pageX + 5) + "px")
+                    .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 20) + "px");
             });
 
@@ -170,7 +156,6 @@
                         .attr("stroke", "")
                         .attr("stroke-width", 1);
                 }
-
                 tooltip.transition()
                     .duration(500)
                     .style("visibility", "hidden")
@@ -191,9 +176,16 @@
                         .attr('fill', 'blue')
                     barCrawlList.push(d)
                 }
-
-                console.log(barCrawlList)
                 updateBarCrawlInfo();
+            });
+
+            d3.select("#search").on("input", function () {
+                const search = this.value.toLowerCase();
+                circles.attr("display", d => {
+                    const categories = JSON.parse(d.categories_json);
+                    const category = categories.map(category => category[0]).join(", ");
+                    return d.name.toLowerCase().includes(search) || category.toLowerCase().includes(search) ? "block" : "none";
+                });
             });
 
         };
@@ -206,7 +198,7 @@
             barCrawlList.forEach((d, i) => {
                 const categories = JSON.parse(d.categories_json);
                 const category = categories.map(category => category[0]).join(", ");
-                const half = d.rating%1 >= 0.5 ? "½" : "";
+                const half = d.rating % 1 >= 0.5 ? "½" : "";
                 const stars = "★".repeat(Math.floor(d.rating)) + half;
 
                 barCrawlInfo.append("div")
@@ -215,7 +207,7 @@
                     <br>Rating: ${stars}
                     <br>Reviews: ${d.review_count}
                     <br>Categories: ${category}`);
-            }); 
+            });
         }
     </script>
 </body>
