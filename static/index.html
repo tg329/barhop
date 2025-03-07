@@ -120,7 +120,7 @@
     <div id="container">
         <div id="map-container">
             <div id="leaflet-map">
-                <svg id="svg-map" viewBox="0 0 900 600"  width="900" height="600" style="background: rgba(255, 255, 255, 0.195);"></svg>
+                <svg id="svg-map" viewBox="0 0 900 600"  width="900" height="600" style="background: rgba(255, 255, 255, 0);"></svg>
                 <div id="tooltip" class="tooltip"></div>
             </div>
         </div>
@@ -142,7 +142,10 @@
     <script>
 
         // Leaflet Map
-        var latLngBounds = L.latLngBounds([[42.40568100116625, -71.20592246808594], [42.25981507090118, -70.90246367664605]]);
+        var latLngBounds = L.latLngBounds([
+            [42.40315534341994, -71.20592246808594], 
+            [42.21981507090118, -70.90046367664605]
+        ]);
         const mapCenter = [latLngBounds.getCenter().lng, latLngBounds.getCenter().lat]
         const minZoom = 12;
         const maxZoom = 17;
@@ -191,45 +194,35 @@
         addWaypoints: false,
         draggableWaypoints: false,
         createMarker: (function() {}),
+        userZoomParameter: true,
+        fitSelectedRoutes: false,
         lineOptions: {styles: [{color: 'black', opacity: 0.15, weight: 9}, {color: 'white', opacity: 0.8, weight: 6}, {color: 'blue', opacity: 1, weight: 2}]}
         }).addTo(map);
-
-
-        // routing.setWaypoints(
-        //     [
-        //         L.latLng(42.40568100116625, -71.20592246808594),
-        //         L.latLng(42.25981507090118, -70.90246367664605)
-        //     ]
-        // )
-
-        // console.log(routing.getWaypoints())
-
-
-
- 
 
        
         // load yelp data and start svg graphing ------
 
         const requestData = async function () {
             // outline Boston on leaflet map
-            const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
+            const geoData = await d3.json("datasets/boston.geojson");
 
             const projection = d3.geoMercator()
-                .scale(160000)
-                .center(mapCenter) // center on Boston
-                // .center([42.3601, -71.0589])
-                .translate([width /2, height / 2.05]);
+                // .fitSize([width, height], geoData)
+                .scale(170000)
+                // .fitSize([width, height], geoData)
+                .center(mapCenter) 
+                // .center([-71.0589, 42.3601]) // center on Boston
+                .translate([width /2, height / 2]);
 
             const path = d3.geoPath().projection(projection);
 
-            let bostonOutline = mapOverlay.selectAll("path")
-                .data(geoData.features)
-                .join("path")
-                .attr("d", path)
-                .attr("stroke", "black")
-                .attr("stroke-width",  zoomItemSize(zoomLevel)/2)
-                .attr("fill", "none");
+            // let bostonOutline = mapOverlay.selectAll("path")
+            //     .data(geoData.features)
+            //     .join("path")
+            //     .attr("d", path)
+            //     .attr("stroke", "black")
+            //     .attr("stroke-width",  zoomItemSize(zoomLevel)/2)
+            //     .attr("fill", "none");
 
             // add points to map
             const yelpData = await d3.csv("datasets/yelp_boston.csv");
@@ -305,12 +298,17 @@
 
             // change dimensions on zoom
             map.on("zoom", function(event){
-                // console.log(event)
+
                 zoomLevel = event.target._zoom
-                // console.log(zoomItemSize(zoomLevel))
-                circles.transition().duration(100).attr('r', zoomItemSize(zoomLevel)).attr("stroke-width", zoomItemSize(zoomLevel)/2);
-                bostonOutline.transition().duration(100).attr('stroke-width',  zoomItemSize(zoomLevel)/2)
-                // mapOverlay.attr("scale", event.transform);
+
+                circles.transition().duration(100)
+                    .attr('r', zoomItemSize(zoomLevel))
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
+
+            
+                    // bostonOutline.transition().duration(100).attr('stroke-width',  zoomItemSize(zoomLevel)/2)
+
+                routing.route()
             })
 
             function updateBarCrawlInfo() {
