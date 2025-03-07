@@ -174,6 +174,7 @@
         const height = svg.attr('height');
 
         const mapOverlay = svg.append("g");
+        const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
         // dimensional changes on zoom
 
@@ -239,7 +240,7 @@
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
                 .attr('inBarCrawl', false)
-                .attr('name', d => d.name)
+                .attr('name', d => d.name);
 
             circles.on("mouseover", function(event, d) {
                 d3.select(this)
@@ -286,10 +287,12 @@
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
                 } else {
+                    const color = colorScale(d.name);
+
                     d3.select(this)
                         .attr('inBarCrawl', true)
-                        .attr('fill', 'blue')
-
+                        .attr('fill', color)
+                    d.color = color;
                     barCrawlList.push(d)
                 }
 
@@ -354,6 +357,7 @@
                     const stars = "★".repeat(Math.floor(d.rating)) + half;
 
                     const item = barCrawlInfo.append("div")
+                        .style("background-color", d.color + 33)
                         .attr("class", "bar-crawl-item")
                         .html(`<strong>${i + 1}. ${d.name}</strong>
                     <br>Address: ${address}
