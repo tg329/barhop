@@ -196,6 +196,7 @@
         createMarker: (function() {}),
         userZoomParameter: true,
         fitSelectedRoutes: false,
+        router: new L.Routing.OSRMv1({profile: "foot"}),
         lineOptions: {styles: [{color: 'black', opacity: 0.15, weight: 4}, {color: 'blue', opacity: 1, weight: 2}]}
         }).addTo(map);
 
@@ -231,15 +232,24 @@
             barCrawlList = []   
             const tooltip = d3.select("#tooltip");
 
+            // color scale for rating red - yellow - green            
+            const colorScale = d3.scaleSequential()
+                                .domain([2, 5])
+                                .interpolator(d3.interpolateRgbBasis(["red", "yellow", "green"]))
+            
+
+
             let circles = mapOverlay.selectAll('map.points').data(yelpData)
                 .join('circle')
                 .attr('class', 'point')
-                .attr("fill", "red")
+                .attr("fill", d => colorScale(d.rating))
                 .attr('r', zoomItemSize(zoomLevel))
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
                 .attr('inBarCrawl', false)
                 .attr('name', d => d.name)
+                .attr("stroke","black")
+                .attr("stroke-width", zoomItemSize(zoomLevel)/4);
 
             circles.on("mouseover", function(event, d) {
                 d3.select(this)
@@ -263,12 +273,12 @@
 
             circles.on("mouseout", function(event, d) {
                 inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
-                if (!inBarCrawl){
-                    d3.select(this)
-                    .transition().duration(200)
-                    .attr("stroke","")
-                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
-                }   
+                // if (!inBarCrawl){
+                d3.select(this)
+                .transition().duration(200)
+                .attr("stroke","black")
+                .attr("stroke-width", zoomItemSize(zoomLevel)/4);
+                // }
 
 
                 tooltip.transition()
@@ -282,7 +292,7 @@
                 if (inBarCrawl){
                     d3.select(this)
                     .attr('inBarCrawl', false)
-                    .attr('fill', 'red')
+                    .attr('fill', d=>colorScale(d.rating))
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
                 } else {
@@ -301,12 +311,11 @@
             map.on("zoom", function(event){
 
                 zoomLevel = event.target._zoom
-
+    
                 circles.transition().duration(100)
                     .attr('r', zoomItemSize(zoomLevel))
-                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
-
-            
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/4);
+                    
                     // bostonOutline.transition().duration(100).attr('stroke-width',  zoomItemSize(zoomLevel)/2)
 
                 routing.route()
@@ -367,11 +376,8 @@
                         barCrawlList.splice(barCrawlList.indexOf(d), 1);
 
                         circles.filter(circleData => circleData.name === d.name)
-                            .attr('fill', 'red')
-                            .attr('stroke', '0')
+                            .attr('fill', d=>colorScale(d.rating))
                             .attr('inBarCrawl', false);
-
-                        console.log(barCrawlList)
 
                         updateBarCrawlInfo();
 
