@@ -257,7 +257,6 @@
             circles.on("mouseover", function(event, d) {
                 d3.select(this)
                     .transition().duration(100)
-                    .attr("stroke","black")
                     .attr("stroke-width", zoomItemSize(zoomLevel)/2);  
 
                 const half = d.rating % 1 >= 0.5 ? "½" : "";
@@ -276,11 +275,15 @@
 
             circles.on("mouseout", function(event, d) {
                 inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
-                // if (!inBarCrawl){
-                d3.select(this)
-                .transition().duration(200)
-                .attr("stroke","black")
-                .attr("stroke-width", zoomItemSize(zoomLevel)/4);
+                if (!inBarCrawl){
+                    d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/4);
+                } 
+                // else {
+                //     d3.select(this)
+                //     .transition().duration(200)
+                //     .attr("stroke-width", zoomItemSize(zoomLevel)/4);
                 // }
 
                 tooltip.transition()
@@ -391,7 +394,7 @@
                         circles.filter(circleData => circleData.name === d.name)
                             .attr('fill', d=>ratingColorScale(d.rating))
                             .attr('inBarCrawl', false)
-                            .attr("opacity", 0.7);
+                            .attr("opacity", 0.7)
 
                         updateBarCrawlInfo();
 
