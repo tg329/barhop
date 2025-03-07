@@ -11,7 +11,7 @@
             display: flex;
             flex-direction: row;
             margin: 0;
-            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
         }
 
         #container {
@@ -63,6 +63,16 @@
             border-radius: 5px;
             font-size: 12px;
         }
+
+        img{
+            width:80px;
+            height:80px;
+            margin-left:20px;
+        }
+
+        h2{
+            margin-top:40px;
+        }
     </style>
 </head>
 
@@ -72,11 +82,12 @@
             <svg id="map" width="1000" height="700"></svg>
         </div>
         <div id="filter-container">
-            <h2>Barhopping in Boston</h2>
+            <!-- Logo source: https://www.flaticon.com/free-icon/toast_993120 -->
+            <div style="display:flex;"><h2>Barhopping in Boston</h2><picture><img src="logo.png" alt="logo>"></picture></div>
             <p>Find the best bars, restaurants, and hidden gems in Boston. Use filters to customize your search for a
                 night out!</p>
             <div class="filter-box">
-                <input type="text" id="search" name="search" placeholder="Search for restaurants or foods">
+                <input type="text" id="search" name="search" placeholder="Search for restaurants or food">
             </div>
             <div id="bar-crawl-info"></div>
         </div>
