@@ -16,6 +16,14 @@
     crossorigin=""></script>
     <!--  -->
 
+    <!-- ROUTING -->
+    <!-- https://www.liedman.net/leaflet-routing-machine/#getting-started -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <!--  -->
+
+
+
     <style>
         body {
             display: flex;
@@ -131,15 +139,13 @@
         
     </div>
 
-    <!-- <div id="tooltip" class="tooltip"></div> -->
-
     <script>
 
         // Leaflet Map
         var latLngBounds = L.latLngBounds([[42.40568100116625, -71.20592246808594], [42.25981507090118, -70.90246367664605]]);
         const mapCenter = [latLngBounds.getCenter().lng, latLngBounds.getCenter().lat]
         const minZoom = 12;
-        const maxZoom = 16;
+        const maxZoom = 17;
         //atlas map from thunderforest: https://www.thunderforest.com/docs/
         var map = L.map('leaflet-map').setView([42.3601, -71.0589], 13); // center on boston
         L.tileLayer('https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=32b24b7ad6f94166923520849c8ce7e2', {
@@ -171,7 +177,36 @@
         let zoomLevel = 13; //current zoom level
         const zoomItemSize = d3.scaleLinear()
                 .domain([minZoom, maxZoom])
-                .range([4, 0.5])
+                .range([2, 0.5])
+
+        // routing. Parameters added so only path is shown.
+        // Documentation: https://www.liedman.net/leaflet-routing-machine/api/#l-routing-itinerary
+        let routing = L.Routing.control({
+        waypoints: [
+            // L.latLng(42.40568100116625, -71.20592246808594),
+            // L.latLng(42.25981507090118, -70.90246367664605)
+        ],
+        show: false,
+        pointMarkerStyle: {radius: 0},
+        addWaypoints: false,
+        draggableWaypoints: false,
+        createMarker: (function() {}),
+        lineOptions: {styles: [{color: 'black', opacity: 0.15, weight: 9}, {color: 'white', opacity: 0.8, weight: 6}, {color: 'blue', opacity: 1, weight: 2}]}
+        }).addTo(map);
+
+
+        // routing.setWaypoints(
+        //     [
+        //         L.latLng(42.40568100116625, -71.20592246808594),
+        //         L.latLng(42.25981507090118, -70.90246367664605)
+        //     ]
+        // )
+
+        // console.log(routing.getWaypoints())
+
+
+
+ 
 
        
         // load yelp data and start svg graphing ------
@@ -207,7 +242,7 @@
                 .join('circle')
                 .attr('class', 'point')
                 .attr("fill", "red")
-                .attr('r', 2)
+                .attr('r', zoomItemSize(zoomLevel))
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
                 .attr('inBarCrawl', false)
@@ -281,6 +316,9 @@
             function updateBarCrawlInfo() {
                 const barCrawlInfo = d3.select("#bar-crawl-info");
                 barCrawlInfo.html("");
+
+                waypoints = []
+
                 barCrawlList.forEach((d, i) => {
                     const categories = JSON.parse(d.categories_json);
                     const category = categories.map(category => category[0]).join(", ");
@@ -308,7 +346,15 @@
 
                         updateBarCrawlInfo();
                     });
+
+                    waypoints.push(L.latLng(d.latitude, d.longitude))
+
+
                 });
+
+                // create a street path going through chosen locations
+                routing.setWaypoints(waypoints)
+
             }
 
             // Search Bar Filters
@@ -327,7 +373,7 @@
 
             const navButton = d3.select("#nav-button");
             navButton.append('button')
-                    .text('navigate!')
+                    .text('Open in google maps!')
                     .on('click', function (event, d){
 
                         // create a hyperlink in this form:
@@ -339,7 +385,8 @@
                             hyperlink = hyperlink + d.latitude +","+ d.longitude + "/";
                         });
 
-                        console.log(hyperlink)
+                        window.open(hyperlink, '_blank').focus();
+                        // console.log(hyperlink)
                     })
 
         }
