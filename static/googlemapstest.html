@@ -11,7 +11,7 @@
             display: flex;
             flex-direction: row;
             margin: 0;
-            font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
         }
 
         #container {
@@ -39,9 +39,9 @@
             max-width: 345px;
         }
 
-        #bar-crawl-info{
-        margin-top:20px;
-        margin-bottom:20px;
+        #bar-crawl-info {
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         .bar-crawl-item {
@@ -73,7 +73,8 @@
         </div>
         <div id="filter-container">
             <h2>Barhopping in Boston</h2>
-            <p>Find the best bars, restaurants, and hidden gems in Boston. Use filters to customize your search for a night out!</p>
+            <p>Find the best bars, restaurants, and hidden gems in Boston. Use filters to customize your search for a
+                night out!</p>
             <div class="filter-box">
                 <input type="text" id="search" name="search" placeholder="Search for restaurants or foods">
             </div>
@@ -88,17 +89,17 @@
         const width = svg.attr("width");
         const height = svg.attr("height");
         const map = svg.append("g");
-    
+
         const requestData = async function () {
             const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
-    
+
             const projection = d3.geoMercator()
                 .scale(160000)
                 .center([-71.0589, 42.3601]) // center on Boston
                 .translate([width / 2, height / 4]);
-    
+
             const path = d3.geoPath().projection(projection);
-    
+
             map.selectAll("path")
                 .data(geoData.features)
                 .join("path")
@@ -106,7 +107,7 @@
                 .attr("stroke", "black")
                 .attr("stroke-width", 0.5)
                 .attr("fill", "none");
-    
+
             const zoom = d3.zoom()
                 .scaleExtent([1, 6])
                 .translateExtent([[-width / 6, -height / 6], [width * 1.2, height * 1.2]])
@@ -114,10 +115,10 @@
                     map.attr("transform", event.transform);
                 });
             svg.call(zoom);
-    
+
             const yelpData = await d3.csv("datasets/yelp_boston.csv");
             let barCrawlList = [];
-    
+
             let circles = map.selectAll('map.points').data(yelpData)
                 .join('circle')
                 .attr('class', 'point')
@@ -126,18 +127,18 @@
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
                 .attr('inBarCrawl', false);
-    
+
             const tooltip = d3.select("#tooltip");
-    
+
             circles.on("mouseover", function (event, d) {
                 d3.select(this)
                     .transition().duration(100)
                     .attr("stroke", "black")
                     .attr("stroke-width", 1);
-    
+
                 const half = d.rating % 1 >= 0.5 ? "½" : "";
                 const stars = "★".repeat(Math.floor(d.rating)) + half;
-    
+
                 tooltip.transition()
                     .duration(100)
                     .style("visibility", "visible")
@@ -147,15 +148,23 @@
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 20) + "px");
             });
-    
-            circles.on("mouseout", function () {
+
+            circles.on("mouseout", function (event, d) {
+                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
+                if (!inBarCrawl) {
+                    d3.select(this)
+                        .transition().duration(200)
+                        .attr("stroke", "")
+                        .attr("stroke-width", 1);
+                }
 
                 tooltip.transition()
-                    .duration(500)
+                    .duration(100)
                     .style("visibility", "hidden")
                     .style("opacity", 0);
+
             });
-    
+
             circles.on("click", function (event, d) {
                 const inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true'; // d3 attr returns text value instead of boolean
                 if (inBarCrawl) {
@@ -171,7 +180,7 @@
                 }
                 updateBarCrawlInfo();
             });
-    
+
             d3.select("#search").on("input", function () {
                 const search = this.value.toLowerCase();
                 circles.attr("display", d => {
@@ -180,7 +189,7 @@
                     return d.name.toLowerCase().includes(search) || category.toLowerCase().includes(search) ? "block" : "none";
                 });
             });
-    
+
             function updateBarCrawlInfo() {
                 const barCrawlInfo = d3.select("#bar-crawl-info");
                 barCrawlInfo.html("");
@@ -191,7 +200,7 @@
                     const address = location.display_address.join(", ");
                     const half = d.rating % 1 >= 0.5 ? "½" : "";
                     const stars = "★".repeat(Math.floor(d.rating)) + half;
-    
+
                     const item = barCrawlInfo.append("div")
                         .attr("class", "bar-crawl-item")
                         .html(`<strong>${i + 1}. ${d.name}</strong>
@@ -200,24 +209,24 @@
                     <br>Reviews: ${d.review_count}
                     <br>Food: ${category}
                     <br><button class="delete">Delete</button>`);
-    
+
                     item.select(".delete").on("click", function () {
                         barCrawlList.splice(barCrawlList.indexOf(d), 1);
-    
+
                         circles.filter(circleData => circleData.id === d.id)
                             .attr('fill', 'red')
                             .attr('stroke', '0')
-                            .attr('inBarCrawl', false); 
-    
+                            .attr('inBarCrawl', false);
+
                         updateBarCrawlInfo();
                     });
                 });
             }
         };
-    
+
         requestData();
     </script>
-    
+
 </body>
 
 </html>
