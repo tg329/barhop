@@ -112,7 +112,9 @@
         #leaflet-map 
         { 
             height: 700px;
-            width: 1000px
+            width: 1100px;
+            margin-left:20px;
+            margin-top: 20px;
         }
 
     </style>
@@ -283,11 +285,11 @@
                     .transition().duration(200)
                     .attr("stroke-width", zoomItemSize(zoomLevel)/4);
                 } 
-                // else {
-                //     d3.select(this)
-                //     .transition().duration(200)
-                //     .attr("stroke-width", zoomItemSize(zoomLevel)/4);
-                // }
+                else {
+                    d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
+                }
 
                 tooltip.transition()
                     .duration(100)
@@ -303,6 +305,7 @@
                         .attr('inBarCrawl', false)
                         .attr('fill', d=>ratingColorScale(d.rating))
                         .attr("opacity", 0.7)
+                        .attr("stroke-width", zoomItemSize(zoomLevel)/4);
 
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
@@ -314,6 +317,7 @@
                         .attr('inBarCrawl', true)
                         .attr('fill', color)
                         .attr("opacity", 1)
+                        .attr("stroke-width", zoomItemSize(zoomLevel)/2);
 
                     // store color in data point to be used in UI
                     d.color = color;
@@ -330,15 +334,20 @@
 
                 zoomLevel = event.target._zoom
     
-                circles.transition().duration(100)
+                circles
+                // .transition().duration(100)
                     .attr('r', zoomItemSize(zoomLevel))
                     .attr("stroke-width", zoomItemSize(zoomLevel)/4);
-                    
-                    // bostonOutline.transition().duration(100).attr('stroke-width',  zoomItemSize(zoomLevel)/2)
-                    
-                routing.route()
+
+                // selected circles have larger radiuses
+                barCrawlList.forEach((d, i) => {
+                    console.log(d)
+                    circles.filter(circleData => circleData.name === d.name)
+                        .attr("stroke-width", zoomItemSize(zoomLevel)/2)
+                });
             })
 
+    
 
             // Google Maps Hyperlink Button
             const navButton = d3.select("#nav-button").append('button')
