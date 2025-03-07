@@ -311,9 +311,36 @@
                 routing.route()
             })
 
+
+            // Google Maps Hyperlink Button
+            const navButton = d3.select("#nav-button").append('button')
+                    .text('Open in google maps!')
+                    .style('visibility', "hidden")
+                    .on('click', function (event, d){
+
+                        // create a hyperlink in this form:
+                        // https://www.google.de/maps/dir/origin_lat,origin_lng/destination_lat,destination_lng/
+                        // console.log(barCrawlList)
+
+                        hyperlink = "https://www.google.de/maps/dir/"
+                        barCrawlList.forEach(d => {
+                            hyperlink = hyperlink + d.latitude +","+ d.longitude + "/";
+                        });
+
+                        window.open(hyperlink, '_blank').focus();
+                        // console.log(hyperlink)
+                    })
+
+
             function updateBarCrawlInfo() {
                 const barCrawlInfo = d3.select("#bar-crawl-info");
                 barCrawlInfo.html("");
+
+                if (barCrawlList.length < 2){
+                    navButton.style('visibility', "hidden")
+                } else {
+                    navButton.style('visibility', "visible")
+                }
 
                 waypoints = []
 
@@ -367,25 +394,7 @@
             });
 
 
-            // Google Maps Hyperlink Button
-
-            const navButton = d3.select("#nav-button");
-            navButton.append('button')
-                    .text('Open in google maps!')
-                    .on('click', function (event, d){
-
-                        // create a hyperlink in this form:
-                        // https://www.google.de/maps/dir/origin_lat,origin_lng/destination_lat,destination_lng/
-                        console.log(barCrawlList)
-
-                        hyperlink = "https://www.google.de/maps/dir/"
-                        barCrawlList.forEach(d => {
-                            hyperlink = hyperlink + d.latitude +","+ d.longitude + "/";
-                        });
-
-                        window.open(hyperlink, '_blank').focus();
-                        // console.log(hyperlink)
-                    })
+            
 
         }
 
