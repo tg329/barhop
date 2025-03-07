@@ -104,7 +104,7 @@
         //atlas map from thunderforest: https://www.thunderforest.com/docs/
         var map = L.map('leaflet-map').setView([42.3601, -71.0589], 13); // center on boston
         L.tileLayer('https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=32b24b7ad6f94166923520849c8ce7e2', {
-            maxZoom: 19,
+            maxZoom: 16,
             minZoom: 11,
             // bounds: latLngBounds,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -127,25 +127,19 @@
 
         const mapOverlay = svg.append("g");
 
-        // const zoom = d3.zoom()
-        //         .scaleExtent([11, 19])
-        //         .translateExtent([[-width / 6, -height / 6], [width * 1.2, height * 1.2]])
-        //         .on("zoom", (event) => {
-        //             mapOverlay.attr("transform", event.transform);
-        //         });
+        // dimensional changes on zoom
 
-        //     svg.call(zoom);
+        let zoomLevel = 13; //current zoom level
+        const zoomItemSize = d3.scaleLinear()
+                .domain([11, 16])
+                .range([4, 0.5])
 
-        // map.on("zoom", function(event){
-        //     console.log(event.target._zoom)
-        //     // console.log(zoom(event.target._zoom))
-        //     // mapOverlay.attr("transform", zoom(event.target._zoom));
-
-        // })
+       
+        
 
         const requestData = async function () {
             // outline Boston on leaflet map
-            const geoData = await d3.json("datasets/boston.geojson");
+            const geoData = await d3.json("datasets/bpda_neighborhood_boundaries.json");
 
             const projection = d3.geoMercator()
                 .scale(160000)
@@ -155,12 +149,12 @@
 
             const path = d3.geoPath().projection(projection);
 
-            mapOverlay.selectAll("path")
+            let bostonOutline = mapOverlay.selectAll("path")
                 .data(geoData.features)
                 .join("path")
                 .attr("d", path)
                 .attr("stroke", "black")
-                .attr("stroke-width", 1)
+                .attr("stroke-width",  zoomItemSize(zoomLevel)/2)
                 .attr("fill", "none");
 
             // add points to map
@@ -182,7 +176,7 @@
                 d3.select(this)
                     .transition().duration(100)
                     .attr("stroke","black")
-                    .attr("stroke-width", 1);  
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);  
             });
 
                   circles.on("mouseout", function(event, d) {
@@ -191,7 +185,7 @@
                     d3.select(this)
                     .transition().duration(200)
                     .attr("stroke","")
-                    .attr("stroke-width", 1);
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
                 }   
             });
 
@@ -217,7 +211,15 @@
 
                 console.log(barCrawlList)
                 
-            });
+            });           
+
+            map.on("zoom", function(event){
+                zoomLevel = event.target._zoom
+                console.log(zoomItemSize(zoomLevel))
+                circles.attr('r', zoomItemSize(zoomLevel))
+                bostonOutline.attr('stroke-width',  zoomItemSize(zoomLevel)/2)
+                // mapOverlay.attr("scale", event.transform);
+            })
 
 
             // Google Maps Hyperlink Button
@@ -243,32 +245,6 @@
 
         requestData()
 
-
-        //     // 
-
-            
-
-
-
-        
-
-        //     console.log(yelpData);
-
-        
-
-        
-        
-            
-      
-
-
-
-       
-
-
-        // };
-
-        // requestData();
     </script>
 </body>
 
