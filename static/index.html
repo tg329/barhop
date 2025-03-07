@@ -72,6 +72,9 @@
             padding: 5px;
             border-radius: 5px;
             font-size: 12px;
+            /* lazy way to make sure tooltip is always on top */
+            z-index: 9999; 
+
         }
 
         img{
@@ -110,6 +113,7 @@
         <div id="map-container">
             <div id="leaflet-map">
                 <svg id="svg-map" viewBox="0 0 900 600"  width="900" height="600" style="background: rgba(255, 255, 255, 0.195);"></svg>
+                <div id="tooltip" class="tooltip"></div>
             </div>
         </div>
         <div id="filter-container">
@@ -127,7 +131,7 @@
         
     </div>
 
-    <div id="tooltip" class="tooltip"></div>
+    <!-- <div id="tooltip" class="tooltip"></div> -->
 
     <script>
 
@@ -197,6 +201,7 @@
             // store yelp datapoints that are selected for the bar crawl. 
             // TODO: make into a linked list??!??? to faciliate changing order
             barCrawlList = []   
+            const tooltip = d3.select("#tooltip");
 
             let circles = mapOverlay.selectAll('map.points').data(yelpData)
                 .join('circle')
@@ -265,9 +270,9 @@
 
             // change dimensions on zoom
             map.on("zoom", function(event){
-                console.log(event)
+                // console.log(event)
                 zoomLevel = event.target._zoom
-                console.log(zoomItemSize(zoomLevel))
+                // console.log(zoomItemSize(zoomLevel))
                 circles.transition().duration(100).attr('r', zoomItemSize(zoomLevel)).attr("stroke-width", zoomItemSize(zoomLevel)/2);
                 bostonOutline.transition().duration(100).attr('stroke-width',  zoomItemSize(zoomLevel)/2)
                 // mapOverlay.attr("scale", event.transform);
