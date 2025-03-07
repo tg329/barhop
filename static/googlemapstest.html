@@ -11,7 +11,7 @@
             display: flex;
             flex-direction: row;
             margin: 0;
-            font-family: 'Courier New', Courier, monospace;
+            font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
         }
 
         #container {
@@ -39,9 +39,15 @@
             max-width: 345px;
         }
 
+        #bar-crawl-info{
+        margin-top:20px;
+        margin-bottom:20px;
+        }
+
         .bar-crawl-item {
             margin-bottom: 10px;
             padding: 10px;
+            line-height: 1.5;
             border: 1px solid #000000;
             background-color: #fff;
             border-radius: 5px;
@@ -66,11 +72,10 @@
             <svg id="map" width="1000" height="700"></svg>
         </div>
         <div id="filter-container">
+            <h2>Barhopping in Boston</h2>
+            <p>Find the best bars, restaurants, and hidden gems in Boston. Use filters to customize your search for a night out!</p>
             <div class="filter-box">
                 <input type="text" id="search" name="search" placeholder="Search for restaurants or foods">
-            </div>
-            <div id="crawl-selection">
-                <svg id="selection" width="100" height="100"></svg>
             </div>
             <div id="bar-crawl-info"></div>
         </div>
@@ -144,9 +149,6 @@
             });
     
             circles.on("mouseout", function () {
-                d3.select(this)
-                    .transition().duration(100)
-                    .attr("stroke-width", 0);
 
                 tooltip.transition()
                     .duration(500)
