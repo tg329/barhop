@@ -163,7 +163,7 @@
             
         //map.fitBounds(latLngBounds);
         var svgOverlay = L.svgOverlay(svgElement, latLngBounds, {
-            opacity: 0.9,
+            opacity: 0.7,
             interactive: true
         }).addTo(map);
 
@@ -174,6 +174,7 @@
         const height = svg.attr('height');
 
         const mapOverlay = svg.append("g");
+        const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
         // dimensional changes on zoom
 
@@ -185,19 +186,18 @@
         // routing. Parameters added so only path is shown.
         // Documentation: https://www.liedman.net/leaflet-routing-machine/api/#l-routing-itinerary
         let routing = L.Routing.control({
-            waypoints: [
-                // L.latLng(42.40568100116625, -71.20592246808594),
-                // L.latLng(42.25981507090118, -70.90246367664605)
-            ],
-            show: false,
-            pointMarkerStyle: {radius: 0},
-            addWaypoints: false,
-            draggableWaypoints: false,
-            createMarker: (function() {}),
-            userZoomParameter: true,
-            fitSelectedRoutes: false,
-            router: new L.Routing.OSRMv1({profile: "foot"}),
-            lineOptions: {styles: [{color: 'black', opacity: 0.15, weight: 1}, {color: 'black', opacity: 1, weight: 5}]}
+        waypoints: [
+            // L.latLng(42.40568100116625, -71.20592246808594),
+            // L.latLng(42.25981507090118, -70.90246367664605)
+        ],
+        show: false,
+        pointMarkerStyle: {radius: 0},
+        addWaypoints: false,
+        draggableWaypoints: false,
+        createMarker: (function() {}),
+        userZoomParameter: true,
+        fitSelectedRoutes: false,
+        lineOptions: {styles: [{color: 'black', opacity: 0.15, weight: 4}, {color: 'blue', opacity: 1, weight: 2}]}
         }).addTo(map);
 
        
@@ -232,27 +232,15 @@
             barCrawlList = []   
             const tooltip = d3.select("#tooltip");
 
-            // color scale for rating red - yellow - green            
-            const ratingColorScale = d3.scaleSequential()
-                                .domain([2, 5])
-                                .interpolator(d3.interpolateRgbBasis(["red", "yellow", "green"]))
-
-            const selectedColorScale = d3.scaleOrdinal(d3.schemeCategory10);
-            
-
             let circles = mapOverlay.selectAll('map.points').data(yelpData)
                 .join('circle')
                 .attr('class', 'point')
-                .attr("fill", d => ratingColorScale(d.rating))
+                .attr("fill", "red")
                 .attr('r', zoomItemSize(zoomLevel))
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
-                .attr("stroke","black")
-                .attr("stroke-width", zoomItemSize(zoomLevel)/4)
-                .attr("opacity", 0.7)
                 .attr('inBarCrawl', false)
                 .attr('name', d => d.name);
-                
 
             circles.on("mouseover", function(event, d) {
                 d3.select(this)
@@ -276,12 +264,13 @@
 
             circles.on("mouseout", function(event, d) {
                 inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
-                // if (!inBarCrawl){
-                d3.select(this)
-                .transition().duration(200)
-                .attr("stroke","black")
-                .attr("stroke-width", zoomItemSize(zoomLevel)/4);
-                // }
+                if (!inBarCrawl){
+                    d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke","")
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
+                }   
+
 
                 tooltip.transition()
                     .duration(100)
@@ -292,26 +281,18 @@
             circles.on("click", function(event, d) {
                 const inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
                 if (inBarCrawl){
-                    // deselect
                     d3.select(this)
-                        .attr('inBarCrawl', false)
-                        .attr('fill', d=>ratingColorScale(d.rating))
-                        .attr("opacity", 0.7)
-
+                    .attr('inBarCrawl', false)
+                    .attr('fill', 'red')
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
                 } else {
-                    //select
-                    const color = selectedColorScale(d.name)
+                    const color = colorScale(d.name);
 
                     d3.select(this)
                         .attr('inBarCrawl', true)
                         .attr('fill', color)
-                        .attr("opacity", 1)
-
-                    // store color in data point to be used in UI
                     d.color = color;
-
                     barCrawlList.push(d)
                 }
 
@@ -323,13 +304,14 @@
             map.on("zoom", function(event){
 
                 zoomLevel = event.target._zoom
-    
+
                 circles.transition().duration(100)
                     .attr('r', zoomItemSize(zoomLevel))
-                    .attr("stroke-width", zoomItemSize(zoomLevel)/4);
-                    
+                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
+
+            
                     // bostonOutline.transition().duration(100).attr('stroke-width',  zoomItemSize(zoomLevel)/2)
-                    
+
                 routing.route()
             })
 
@@ -389,9 +371,11 @@
                         barCrawlList.splice(barCrawlList.indexOf(d), 1);
 
                         circles.filter(circleData => circleData.name === d.name)
-                            .attr('fill', d=>ratingColorScale(d.rating))
-                            .attr('inBarCrawl', false)
-                            .attr("opacity", 0.7);
+                            .attr('fill', 'red')
+                            .attr('stroke', '0')
+                            .attr('inBarCrawl', false);
+
+                        console.log(barCrawlList)
 
                         updateBarCrawlInfo();
 
