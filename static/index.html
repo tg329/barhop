@@ -21,7 +21,7 @@
             display: flex;
             flex-direction: row;
             margin: 0;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
         }
 
         #container {
@@ -46,6 +46,42 @@
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            max-width: 345px;
+        }
+
+        #bar-crawl-info {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .bar-crawl-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            line-height: 1.5;
+            border: 1px solid #000000;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+
+        .tooltip {
+            pointer-events: none;
+            visibility: hidden;
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        img{
+            width:80px;
+            height:80px;
+            margin-left:20px;
+        }
+
+        h2{
+            margin-top:40px;
         }
 
         button {
@@ -77,35 +113,34 @@
             </div>
         </div>
         <div id="filter-container">
+            <!-- Logo source: https://www.flaticon.com/free-icon/toast_993120 -->
+            <div style="display:flex;"><h2>Barhopping in Boston</h2><picture><img src="logo.png" alt="logo>"></picture></div>
+            <p>Find the best bars, restaurants, and hidden gems in Boston. Use filters to customize your search for a
+                night out!</p>
             <div class="filter-box">
-                <label for="filter2">Filter</label>
-                <select id="filter2" name="filter2">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                </select>
+                <input type="text" id="search" name="search" placeholder="Search for restaurants or food">
             </div>
-            <h2>
-                Bar Crawl
-            </h2>
-            <svg id="selection" width="300" height="300"></svg>
-            <div id="nav-button"></div>
-            
+            <div id="bar-crawl-info"></div>
+
+            <div id="nav-button"></div> 
         </div>
         
     </div>
+
+    <div id="tooltip" class="tooltip"></div>
 
     <script>
 
         // Leaflet Map
         var latLngBounds = L.latLngBounds([[42.40568100116625, -71.20592246808594], [42.25981507090118, -70.90246367664605]]);
         const mapCenter = [latLngBounds.getCenter().lng, latLngBounds.getCenter().lat]
-
-        console.log(mapCenter)
+        const minZoom = 12;
+        const maxZoom = 16;
         //atlas map from thunderforest: https://www.thunderforest.com/docs/
         var map = L.map('leaflet-map').setView([42.3601, -71.0589], 13); // center on boston
         L.tileLayer('https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=32b24b7ad6f94166923520849c8ce7e2', {
-            maxZoom: 16,
-            minZoom: 11,
+            maxZoom: maxZoom,
+            minZoom: minZoom,
             // bounds: latLngBounds,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
@@ -131,11 +166,11 @@
 
         let zoomLevel = 13; //current zoom level
         const zoomItemSize = d3.scaleLinear()
-                .domain([11, 16])
+                .domain([minZoom, maxZoom])
                 .range([4, 0.5])
 
        
-        
+        // load yelp data and start svg graphing ------
 
         const requestData = async function () {
             // outline Boston on leaflet map
@@ -177,9 +212,22 @@
                     .transition().duration(100)
                     .attr("stroke","black")
                     .attr("stroke-width", zoomItemSize(zoomLevel)/2);  
+
+                const half = d.rating % 1 >= 0.5 ? "½" : "";
+                const stars = "★".repeat(Math.floor(d.rating)) + half;
+
+                tooltip.transition()
+                    .duration(100)
+                    .style("visibility", "visible")
+                    .style("opacity", 1);
+                tooltip.html(`<strong>${d.name}</strong>
+                <br>Rating: ${stars}`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+
             });
 
-                  circles.on("mouseout", function(event, d) {
+            circles.on("mouseout", function(event, d) {
                 inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
                 if (!inBarCrawl){
                     d3.select(this)
@@ -187,10 +235,16 @@
                     .attr("stroke","")
                     .attr("stroke-width", zoomItemSize(zoomLevel)/2);
                 }   
+
+
+                tooltip.transition()
+                    .duration(100)
+                    .style("visibility", "hidden")
+                    .style("opacity", 0);
             });
 
             circles.on("click", function(event, d) {
-                inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
+                const inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
                 if (inBarCrawl){
                     d3.select(this)
                     .attr('inBarCrawl', false)
@@ -198,10 +252,6 @@
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
                 } else {
-                    // barCrawl.append('text')
-                    //     .attr('dy', 10 + barCrawlList.length * 15)
-                    //     .text(d.name)
-
                     d3.select(this)
                         .attr('inBarCrawl', true)
                         .attr('fill', 'blue')
@@ -209,17 +259,63 @@
                     barCrawlList.push(d)
                 }
 
-                console.log(barCrawlList)
+                updateBarCrawlInfo();
                 
             });           
 
+            // change dimensions on zoom
             map.on("zoom", function(event){
+                console.log(event)
                 zoomLevel = event.target._zoom
                 console.log(zoomItemSize(zoomLevel))
-                circles.attr('r', zoomItemSize(zoomLevel))
-                bostonOutline.attr('stroke-width',  zoomItemSize(zoomLevel)/2)
+                circles.transition().duration(100).attr('r', zoomItemSize(zoomLevel)).attr("stroke-width", zoomItemSize(zoomLevel)/2);
+                bostonOutline.transition().duration(100).attr('stroke-width',  zoomItemSize(zoomLevel)/2)
                 // mapOverlay.attr("scale", event.transform);
             })
+
+            function updateBarCrawlInfo() {
+                const barCrawlInfo = d3.select("#bar-crawl-info");
+                barCrawlInfo.html("");
+                barCrawlList.forEach((d, i) => {
+                    const categories = JSON.parse(d.categories_json);
+                    const category = categories.map(category => category[0]).join(", ");
+                    const location = JSON.parse(d.location_json);
+                    const address = location.display_address.join(", ");
+                    const half = d.rating % 1 >= 0.5 ? "½" : "";
+                    const stars = "★".repeat(Math.floor(d.rating)) + half;
+
+                    const item = barCrawlInfo.append("div")
+                        .attr("class", "bar-crawl-item")
+                        .html(`<strong>${i + 1}. ${d.name}</strong>
+                    <br>Address: ${address}
+                    <br>Rating: ${stars}
+                    <br>Reviews: ${d.review_count}
+                    <br>Food: ${category}
+                    <br><button class="delete">Delete</button>`);
+
+                    item.select(".delete").on("click", function () {
+                        barCrawlList.splice(barCrawlList.indexOf(d), 1);
+
+                        circles.filter(circleData => circleData.id === d.id)
+                            .attr('fill', 'red')
+                            .attr('stroke', '0')
+                            .attr('inBarCrawl', false);
+
+                        updateBarCrawlInfo();
+                    });
+                });
+            }
+
+            // Search Bar Filters
+
+            d3.select("#search").on("input", function () {
+                const search = this.value.toLowerCase();
+                circles.attr("display", d => {
+                    const categories = JSON.parse(d.categories_json);
+                    const category = categories.map(category => category[0]).join(", ");
+                    return d.name.toLowerCase().includes(search) || category.toLowerCase().includes(search) ? "block" : "none";
+                });
+            });
 
 
             // Google Maps Hyperlink Button
