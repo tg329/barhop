@@ -9,26 +9,21 @@
 
     <!-- LEAFLET -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""/>
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
-    <!--  -->
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <!-- ROUTING -->
     <!-- https://www.liedman.net/leaflet-routing-machine/#getting-started -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-    <!--  -->
-
-
 
     <style>
         body {
             display: flex;
             flex-direction: row;
             margin: 0;
+            height: 100%;
             font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
         }
 
@@ -45,24 +40,28 @@
         #filter-container {
             flex: 1;
             padding: 20px;
-            background-color: #f4f4f4;
+            background-color: #414b7b;
+            color:#fff;
         }
 
         .filter-box input,
         .filter-box select {
             width: 100%;
             padding: 8px;
-            border: 1px solid #ccc;
+            border: 1px solid #000000;
             border-radius: 4px;
-            max-width: 345px;
+            max-width: 290px;
         }
 
         #bar-crawl-info {
             margin-top: 20px;
             margin-bottom: 20px;
             overflow-y: auto;
-            height: 500px;
-            
+            height: 400px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+
         }
 
         .bar-crawl-item {
@@ -70,8 +69,8 @@
             padding: 10px;
             line-height: 1.5;
             border: 1px solid #000000;
-            background-color: #fff;
             border-radius: 5px;
+            color:black;
         }
 
         .tooltip {
@@ -84,71 +83,81 @@
             border-radius: 5px;
             font-size: 12px;
             /* lazy way to make sure tooltip is always on top */
-            z-index: 9999; 
+            z-index: 9999;
 
         }
 
-        img{
-            width:80px;
-            height:80px;
-            margin-left:20px;
+        img {
+            width: 80px;
+            height: 80px;
+            margin-left: 30px;
         }
 
-        h2{
-            margin-top:40px;
+        h2 {
+            margin-top: 20px;
+            color: #f3be79;
         }
 
         button {
-            background-color: #8391a0;
-            color: white;
+            background-color: #f3be79;
+            color: rgb(0, 0, 0);
             padding: 10px;
-            font-size: 16px;
             border-radius: 8px;
             cursor: pointer;
             margin: 5px;
-            transition: background 0.3s ease;
         }
 
-        #leaflet-map 
-        { 
-            height: 700px;
+        button:hover {
+            background-color: #f3be79;
+        }
+
+        #leaflet-map {
+            height: 900px;
             width: 1100px;
-            margin-left:20px;
-            margin-top: 20px;
+  
         }
-
     </style>
 </head>
 
 <body>
-    
+
     <div id="container">
         <div id="map-container">
             <div id="leaflet-map">
-                <svg id="svg-map" viewBox="0 0 900 600"  width="900" height="600" style="background: rgba(255, 255, 255, 0);"></svg>
+                <svg id="svg-map" viewBox="0 0 900 600" width="900" height="600"
+                    style="background: rgba(255, 255, 255, 0);"></svg>
                 <div id="tooltip" class="tooltip"></div>
             </div>
         </div>
+        
         <div id="filter-container">
-            <!-- Logo source: https://www.flaticon.com/free-icon/toast_993120 -->
-            <div style="display:flex;"><h2>Barhopping in Boston</h2><picture><img src="logo.png" alt="logo>"></picture></div>
+            <div style="display:flex;">
+                <h2>Barhopping in Boston</h2>
+                <!-- Logo source: https://www.flaticon.com/free-icon/toast_993120 -->
+                <picture><img src="logo.png" alt="logo>"></picture>
+            </div>
             <p>Find the best bars, restaurants, and hidden gems in Boston. Use filters to customize your search for a
                 night out!</p>
             <div class="filter-box">
                 <input type="text" id="search" name="search" placeholder="Search for restaurants or food">
             </div>
+            <select id="filter-food-type">
+                <option value="">Select Food Type</option>
+            </select>
+            <button id="filter-reset">Reset Filters</button>
+
             <div id="bar-crawl-info"></div>
 
-            <div id="nav-button"></div> 
+            <div id="nav-button"></div>
         </div>
-        
+
     </div>
 
     <script>
 
         // Leaflet Map
         var latLngBounds = L.latLngBounds([
-            [42.40315534341994, -71.20592246808594], 
+            [42.40315534341994, -71.20592246808594],
             [42.21981507090118, -70.90046367664605]
         ]);
         const mapCenter = [latLngBounds.getCenter().lng, latLngBounds.getCenter().lat]
@@ -162,10 +171,10 @@
             // bounds: latLngBounds,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
-        
+
         // svg overlay https://leafletjs.com/examples/overlays/
         var svgElement = document.querySelector('#svg-map');
-            
+
         //map.fitBounds(latLngBounds);
         var svgOverlay = L.svgOverlay(svgElement, latLngBounds, {
             opacity: 0.9,
@@ -184,8 +193,8 @@
 
         let zoomLevel = 13; //current zoom level
         const zoomItemSize = d3.scaleLinear()
-                .domain([minZoom, maxZoom])
-                .range([2, 0.5])
+            .domain([minZoom, maxZoom])
+            .range([2, 0.5])
 
         // routing. Parameters added so only path is shown.
         // Documentation: https://www.liedman.net/leaflet-routing-machine/api/#l-routing-itinerary
@@ -195,17 +204,17 @@
                 // L.latLng(42.25981507090118, -70.90246367664605)
             ],
             show: false,
-            pointMarkerStyle: {radius: 0},
+            pointMarkerStyle: { radius: 0 },
             addWaypoints: false,
             draggableWaypoints: false,
-            createMarker: (function() {}),
+            createMarker: (function () { }),
             userZoomParameter: true,
             fitSelectedRoutes: false,
-            router: new L.Routing.OSRMv1({profile: "foot"}),
-            lineOptions: {styles: [{color: 'black', opacity: 0.15, weight: 1}, {color: 'black', opacity: 1, weight: 5}]}
+            router: new L.Routing.OSRMv1({ profile: "foot" }),
+            lineOptions: { styles: [{ color: 'black', opacity: 0.15, weight: 1 }, { color: 'black', opacity: 1, weight: 5 }] }
         }).addTo(map);
 
-       
+
         // load yelp data and start svg graphing ------
 
         const requestData = async function () {
@@ -216,9 +225,9 @@
                 // .fitSize([width, height], geoData)
                 .scale(170000)
                 // .fitSize([width, height], geoData)
-                .center(mapCenter) 
+                .center(mapCenter)
                 // .center([-71.0589, 42.3601]) // center on Boston
-                .translate([width /2, height / 2]);
+                .translate([width / 2, height / 2]);
 
             const path = d3.geoPath().projection(projection);
 
@@ -234,16 +243,16 @@
             const yelpData = await d3.csv("datasets/yelp_boston.csv");
             // store yelp datapoints that are selected for the bar crawl. 
             // TODO: make into a linked list??!??? to faciliate changing order
-            barCrawlList = []   
+            barCrawlList = []
             const tooltip = d3.select("#tooltip");
 
             // color scale for rating red - yellow - green            
             const ratingColorScale = d3.scaleSequential()
-                                .domain([2, 5])
-                                .interpolator(d3.interpolateRgbBasis(["red", "yellow", "green"]))
+                .domain([2, 5])
+                .interpolator(d3.interpolateRgbBasis(["red", "yellow", "green"]))
 
             const selectedColorScale = d3.scaleOrdinal(d3.schemeCategory10);
-            
+
 
             let circles = mapOverlay.selectAll('map.points').data(yelpData)
                 .join('circle')
@@ -252,17 +261,17 @@
                 .attr('r', zoomItemSize(zoomLevel))
                 .attr("cx", d => projection([Number(d.longitude), Number(d.latitude)])[0])
                 .attr('cy', d => projection([Number(d.longitude), Number(d.latitude)])[1])
-                .attr("stroke","black")
-                .attr("stroke-width", zoomItemSize(zoomLevel)/4)
+                .attr("stroke", "black")
+                .attr("stroke-width", zoomItemSize(zoomLevel) / 4)
                 .attr("opacity", 0.7)
                 .attr('inBarCrawl', false)
                 .attr('name', d => d.name);
-                
 
-            circles.on("mouseover", function(event, d) {
+
+            circles.on("mouseover", function (event, d) {
                 d3.select(this)
                     .transition().duration(100)
-                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);  
+                    .attr("stroke-width", zoomItemSize(zoomLevel) / 2);
 
                 const half = d.rating % 1 >= 0.5 ? "½" : "";
                 const stars = "★".repeat(Math.floor(d.rating)) + half;
@@ -278,17 +287,17 @@
 
             });
 
-            circles.on("mouseout", function(event, d) {
+            circles.on("mouseout", function (event, d) {
                 inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
-                if (!inBarCrawl){
+                if (!inBarCrawl) {
                     d3.select(this)
-                    .transition().duration(200)
-                    .attr("stroke-width", zoomItemSize(zoomLevel)/4);
-                } 
+                        .transition().duration(200)
+                        .attr("stroke-width", zoomItemSize(zoomLevel) / 4);
+                }
                 else {
                     d3.select(this)
-                    .transition().duration(200)
-                    .attr("stroke-width", zoomItemSize(zoomLevel)/2);
+                        .transition().duration(200)
+                        .attr("stroke-width", zoomItemSize(zoomLevel) / 2);
                 }
 
                 tooltip.transition()
@@ -297,15 +306,15 @@
                     .style("opacity", 0);
             });
 
-            circles.on("click", function(event, d) {
+            circles.on("click", function (event, d) {
                 const inBarCrawl = d3.select(this).attr('inBarCrawl') == 'true' ? true : false; // d3 attr returns text value instead of boolean
-                if (inBarCrawl){
+                if (inBarCrawl) {
                     // deselect
                     d3.select(this)
                         .attr('inBarCrawl', false)
-                        .attr('fill', d=>ratingColorScale(d.rating))
+                        .attr('fill', d => ratingColorScale(d.rating))
                         .attr("opacity", 0.7)
-                        .attr("stroke-width", zoomItemSize(zoomLevel)/4);
+                        .attr("stroke-width", zoomItemSize(zoomLevel) / 4);
 
                     barCrawlList.splice(barCrawlList.indexOf(d), 1)
 
@@ -317,7 +326,7 @@
                         .attr('inBarCrawl', true)
                         .attr('fill', color)
                         .attr("opacity", 1)
-                        .attr("stroke-width", zoomItemSize(zoomLevel)/2);
+                        .attr("stroke-width", zoomItemSize(zoomLevel) / 2);
 
                     // store color in data point to be used in UI
                     d.color = color;
@@ -326,54 +335,54 @@
                 }
 
                 updateBarCrawlInfo();
-                
-            });           
+
+            });
 
             // change dimensions on zoom
-            map.on("zoom", function(event){
+            map.on("zoom", function (event) {
 
                 zoomLevel = event.target._zoom
-    
+
                 circles
-                // .transition().duration(100)
+                    // .transition().duration(100)
                     .attr('r', zoomItemSize(zoomLevel))
-                    .attr("stroke-width", zoomItemSize(zoomLevel)/4);
+                    .attr("stroke-width", zoomItemSize(zoomLevel) / 4);
 
                 // selected circles have larger radiuses
                 barCrawlList.forEach((d, i) => {
                     console.log(d)
                     circles.filter(circleData => circleData.name === d.name)
-                        .attr("stroke-width", zoomItemSize(zoomLevel)/2)
+                        .attr("stroke-width", zoomItemSize(zoomLevel) / 2)
                 });
             })
 
-    
+
 
             // Google Maps Hyperlink Button
             const navButton = d3.select("#nav-button").append('button')
-                    .text('Open in google maps!')
-                    .style('visibility', "hidden")
-                    .on('click', function (event, d){
+                .text('Open in google maps!')
+                .style('visibility', "hidden")
+                .on('click', function (event, d) {
 
-                        // create a hyperlink in this form:
-                        // https://www.google.de/maps/dir/origin_lat,origin_lng/destination_lat,destination_lng/
-                        // console.log(barCrawlList)
+                    // create a hyperlink in this form:
+                    // https://www.google.de/maps/dir/origin_lat,origin_lng/destination_lat,destination_lng/
+                    // console.log(barCrawlList)
 
-                        hyperlink = "https://www.google.de/maps/dir/"
-                        barCrawlList.forEach(d => {
-                            hyperlink = hyperlink + d.latitude +","+ d.longitude + "/";
-                        });
+                    hyperlink = "https://www.google.de/maps/dir/"
+                    barCrawlList.forEach(d => {
+                        hyperlink = hyperlink + d.latitude + "," + d.longitude + "/";
+                    });
 
-                        window.open(hyperlink, '_blank').focus();
-                        // console.log(hyperlink)
-                    })
+                    window.open(hyperlink, '_blank').focus();
+                    // console.log(hyperlink)
+                })
 
 
             function updateBarCrawlInfo() {
                 const barCrawlInfo = d3.select("#bar-crawl-info");
                 barCrawlInfo.html("");
 
-                if (barCrawlList.length < 2){
+                if (barCrawlList.length < 2) {
                     navButton.style('visibility', "hidden")
                 } else {
                     navButton.style('visibility', "visible")
@@ -404,10 +413,10 @@
                         barCrawlList.splice(barCrawlList.indexOf(d), 1);
 
                         circles.filter(circleData => circleData.name === d.name)
-                            .attr('fill', d=>ratingColorScale(d.rating))
+                            .attr('fill', d => ratingColorScale(d.rating))
                             .attr('inBarCrawl', false)
                             .attr("opacity", 0.7)
-                            .attr("stroke-width", zoomItemSize(zoomLevel)/4)
+                            .attr("stroke-width", zoomItemSize(zoomLevel) / 4)
 
                         updateBarCrawlInfo();
 
@@ -433,8 +442,38 @@
                 });
             });
 
+            const foodTypes = [];
 
-            
+            yelpData.forEach(d => {
+                const categories = JSON.parse(d.categories_json);
+                categories.forEach(category => {
+                    if (!foodTypes.includes(category[0])) {
+                        foodTypes.push(category[0]);
+                    }
+                });
+            });
+            // console.log(foodTypes)
+
+            const foodTypeDropdown = d3.select("#filter-food-type");
+            foodTypes.forEach(foodType => {
+                foodTypeDropdown.append("option").text(foodType).attr("value", foodType);
+            });
+
+            // same as search
+            foodTypeDropdown.on("change", function () {
+                const selectedFoodType = this.value.toLowerCase();
+                circles.attr("display", d => {
+                    const categories = JSON.parse(d.categories_json);
+                    const category = categories.map(category => category[0]).join(", ");
+                    return category.toLowerCase().includes(selectedFoodType) ? "block" : "none";
+                });
+            });
+
+            d3.select("#filter-reset").on("click", function () {
+                circles.attr("display", "block");
+                foodTypeDropdown.property("value", "");
+            });
+
 
         }
 
